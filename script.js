@@ -1,4 +1,5 @@
 'use strict';
+// mankara2_ai_auto_v2: 横取り後は必ず相手ターンへ切り替える修正版
 
 const PIT_COUNT = 6;
 const START_STONES = 4;
@@ -138,7 +139,13 @@ function updateMessage() {
     els.detailText.textContent = '相手の番は自動で進みます。あなたは待つだけでOK。';
   } else {
     els.message.textContent = '光っている穴をタップ';
-    els.detailText.textContent = state.captured ? '横取り成功。次の手を選んでください。' : '相手の番になると、AIが自動で次の手を選びます。';
+    if (state.captured && state.captured.by === AI) {
+      els.detailText.textContent = 'AIの横取り後なので、あなたの番です。';
+    } else if (state.captured && state.captured.by === PLAYER) {
+      els.detailText.textContent = 'あなたの横取り後なので、AIの番に切り替わります。';
+    } else {
+      els.detailText.textContent = '相手の番になると、AIが自動で次の手を選びます。';
+    }
   }
 }
 
@@ -189,6 +196,7 @@ function applyMove(s, side, index) {
   const last = sow(s, side, index);
   s.last = last;
 
+  let didCapture = false;
   if (last && last.type === 'pit' && last.side === side && s.pits[side][last.index] === 1) {
     const opp = opponent(side);
     const oppIndex = PIT_COUNT - 1 - last.index;
@@ -197,12 +205,15 @@ function applyMove(s, side, index) {
       s.pits[opp][oppIndex] = 0;
       s.pits[side][last.index] = 0;
       s.stores[side] += captured + 1;
-      s.captured = { side: opp, index: oppIndex, amount: captured + 1 };
+      s.captured = { side: opp, index: oppIndex, amount: captured + 1, by: side };
+      didCapture = true;
     }
   }
 
   if (!finishIfNeeded(s)) {
-    const getsExtraTurn = last && last.type === 'store' && last.side === side;
+    // 重要：横取りが成立した手はそこで終了。再手番にはしない。
+    // 再手番になるのは「最後の石が自分のGET欄に入った時」だけ。
+    const getsExtraTurn = !didCapture && last && last.type === 'store' && last.side === side;
     s.turn = getsExtraTurn ? side : opponent(side);
     if (playablePits(s.turn, s).length === 0) s.turn = opponent(s.turn);
   }

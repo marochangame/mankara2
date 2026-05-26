@@ -1,11 +1,13 @@
-マンカラ AI対戦版
+マンカラ AI自動対戦 v2
 
-追加内容：
-- あなたが打ったあと、相手ターンでAIが自動的に1手選びます。
-- AIは「横取り」「得点差」「もう一度打てる手」を優先して選びます。
-- 既存の遊び方に近いKalah型ルールです。
-- ホーム画面用アイコンとmanifestを同梱しています。
+修正内容：
+- 横取りが成立した後は、必ず相手ターンへ切り替わるように修正。
+- AIの横取り後は「あなたの番」、あなたの横取り後は「AIの番」に同期。
+- AI自動対戦の動作は維持。
+- 既存デザインは大きく変更していません。
 
 アップロード方法：
-GitHubの mankara2 リポジトリに、このZIPの中身をすべて上書きアップロードしてください。
-index.html / style.css / script.js / manifest.webmanifest / icons フォルダを入れます。
+このフォルダ内の index.html / style.css / script.js / manifest.webmanifest / icons を、GitHub の mankara2 側へ上書きしてください。
+
+backup_previous_v1.zip：
+前回版のバックアップです。
