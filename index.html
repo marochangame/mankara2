@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>マンカラ ゲーム成立版</title>
+  <title>マンカラ</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="style.css" />
@@ -43,29 +43,7 @@
       <button id="resetBtn" class="btn pink">リセット</button>
     </section>
 
-    <section class="manual">
-      <h2>盤面を手入力で合わせる</h2>
-      <label>自分側 6穴（左から）
-        <input id="playerInput" inputmode="numeric" value="4,4,4,4,4,4" />
-      </label>
-      <label>相手側 6穴（左から）
-        <input id="oppInput" inputmode="numeric" value="4,4,4,4,4,4" />
-      </label>
-      <div class="manual-grid">
-        <label>自分ゴール
-          <input id="playerStoreInput" inputmode="numeric" value="0" />
-        </label>
-        <label>相手ゴール
-          <input id="oppStoreInput" inputmode="numeric" value="0" />
-        </label>
-      </div>
-      <button id="applyBtn" class="btn green full">この盤面に合わせる</button>
-      <p class="note">
-        配石順：自分側は左から右へ進み、自分ゴールを越えたら相手1側から入ります。
-        相手側は右から左へ進み、相手ゴールを越えたら自分1側から入ります。
-      </p>
-    </section>
   </main>
-  <script src="app.js?v=core-game-v1"></script>
+  <script src="app.js?v=core-game-v2-ui-large"></script>
 </body>
 </html>

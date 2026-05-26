@@ -20,12 +20,7 @@
     subMessage: document.getElementById("subMessage"),
     undoBtn: document.getElementById("undoBtn"),
     switchBtn: document.getElementById("switchBtn"),
-    resetBtn: document.getElementById("resetBtn"),
-    applyBtn: document.getElementById("applyBtn"),
-    playerInput: document.getElementById("playerInput"),
-    oppInput: document.getElementById("oppInput"),
-    playerStoreInput: document.getElementById("playerStoreInput"),
-    oppStoreInput: document.getElementById("oppStoreInput")
+    resetBtn: document.getElementById("resetBtn")
   };
 
   function freshState(){
@@ -205,10 +200,7 @@
   }
 
   function syncInputs(){
-    el.playerInput.value = state.player.join(",");
-    el.oppInput.value = state.opponent.join(",");
-    el.playerStoreInput.value = String(state.playerStore);
-    el.oppStoreInput.value = String(state.opponentStore);
+    // 手入力エリアは通常プレイ用UIから削除しました。
   }
 
   function render(main, sub){
@@ -226,30 +218,6 @@
     syncInputs();
   }
 
-  function parseSix(text){
-    const nums = text.split(",").map(s => Number(s.trim()));
-    if(nums.length !== 6 || nums.some(n => !Number.isInteger(n) || n < 0)) return null;
-    return nums;
-  }
-
-  el.applyBtn.addEventListener("click", () => {
-    const p = parseSix(el.playerInput.value);
-    const o = parseSix(el.oppInput.value);
-    const ps = Number(el.playerStoreInput.value);
-    const os = Number(el.oppStoreInput.value);
-    if(!p || !o || !Number.isInteger(ps) || ps < 0 || !Number.isInteger(os) || os < 0){
-      alert("入力は 0以上の整数をカンマ区切りで入れてください。例：4,4,4,4,4,4");
-      return;
-    }
-    history.push(clone(state));
-    state.player = p;
-    state.opponent = o;
-    state.playerStore = ps;
-    state.opponentStore = os;
-    state.gameOver = false;
-    lastLanding = null;
-    render("盤面を合わせました", `${state.turn === "player" ? "あなた" : "相手"}の番です。`);
-  });
 
   el.undoBtn.addEventListener("click", () => {
     if(history.length === 0){
