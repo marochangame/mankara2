@@ -1,5 +1,5 @@
 'use strict';
-// mankara2_ai_auto_v2: 横取り後は必ず相手ターンへ切り替える修正版
+// mankara2_ai_auto_v3: 横取り判定を復旧。向かい側は画面上の同じ列で判定。横取り後は手番終了。
 
 const PIT_COUNT = 6;
 const START_STONES = 4;
@@ -199,7 +199,9 @@ function applyMove(s, side, index) {
   let didCapture = false;
   if (last && last.type === 'pit' && last.side === side && s.pits[side][last.index] === 1) {
     const opp = opponent(side);
-    const oppIndex = PIT_COUNT - 1 - last.index;
+    // あそび大全系の見た目に合わせ、向かい側は画面上の同じ列。
+    // 以前の reverse 判定だと、見た目の正面ではない穴を見てしまい横取りが発生しない。
+    const oppIndex = last.index;
     const captured = s.pits[opp][oppIndex];
     if (captured > 0) {
       s.pits[opp][oppIndex] = 0;
