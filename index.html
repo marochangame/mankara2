@@ -1,49 +1,51 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>マンカラ</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="app">
-    <header class="header">
-      <h1>マンカラ</h1>
-      <div id="turnBadge" class="turn-badge">あなたの番</div>
-    </header>
-
-    <section class="board" aria-label="マンカラ盤面">
-      <div class="store opponent-store">
-        <div class="store-label">相手ゴール</div>
-        <div id="oppStore" class="store-count">0</div>
-      </div>
-
-      <div class="pits">
-        <div id="opponentRow" class="row top-row"></div>
-        <div id="playerRow" class="row bottom-row"></div>
-      </div>
-
-      <div class="store player-store">
-        <div class="store-label">自分ゴール</div>
-        <div id="playerStore" class="store-count">0</div>
+  <main class="app" aria-label="マンカラゲーム">
+    <section class="status-card" id="statusCard">
+      <div class="turn-label" id="turnLabel">あなたの番</div>
+      <div class="score-mini">
+        <span>相手 <b id="opStoreMini">0</b></span>
+        <span>あなた <b id="myStoreMini">0</b></span>
       </div>
     </section>
 
-    <section class="message">
-      <div id="mainMessage" class="main-message">下の穴をタップして手を進めます</div>
-      <div id="subMessage" class="sub-message">AI判定なし。まずゲームルールだけを正確に動かす版です。</div>
+    <section class="board" id="board">
+      <div class="store store-op" aria-label="相手の得点エリア">
+        <div class="store-title">相手<br>GET</div>
+        <div class="store-score" id="opStore">0</div>
+      </div>
+
+      <div class="pit-area">
+        <div class="direction opponent-dir">相手の列　← ← ← ← ←</div>
+        <div class="row opponent-row" id="opponentRow"></div>
+        <div class="row my-row" id="myRow"></div>
+        <div class="direction my-dir">あなたの列　→ → → → →</div>
+      </div>
+
+      <div class="store store-me" aria-label="あなたの得点エリア">
+        <div class="store-title">あなた<br>GET</div>
+        <div class="store-score" id="myStore">0</div>
+      </div>
     </section>
 
-    <section class="controls">
-      <button id="undoBtn" class="btn yellow">一手戻す</button>
-      <button id="switchBtn" class="btn white">手番切替</button>
-      <button id="resetBtn" class="btn pink">リセット</button>
+    <section class="message-card">
+      <div class="message-main" id="messageMain">光っている穴をタップ</div>
+      <div class="message-sub" id="messageSub">最後に置いた穴は白く光ります。横取りした時は表示します。</div>
     </section>
 
+    <section class="controls" aria-label="操作ボタン">
+      <button id="undoBtn" type="button">一手戻す</button>
+      <button id="switchBtn" type="button">手番切替</button>
+      <button id="resetBtn" type="button" class="danger">リセット</button>
+    </section>
   </main>
-  <script src="app.js?v=core-game-v2-ui-large"></script>
+  <script src="script.js"></script>
 </body>
 </html>
