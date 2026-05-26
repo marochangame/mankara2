@@ -1,51 +1,59 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>マンカラ</title>
+  <title>マンカラ AI対戦</title>
+  <meta name="theme-color" content="#6f4a2f" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="app" aria-label="マンカラゲーム">
-    <section class="status-card" id="statusCard">
-      <div class="turn-label" id="turnLabel">あなたの番</div>
-      <div class="score-mini">
-        <span>相手 <b id="opStoreMini">0</b></span>
-        <span>あなた <b id="myStoreMini">0</b></span>
+  <main class="app" aria-live="polite">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">MANCALA</p>
+        <h1>マンカラ</h1>
+      </div>
+      <div id="turnBadge" class="turn-badge">あなたの番</div>
+    </section>
+
+    <section class="score-card">
+      <div class="score-mini opponent"><span>相手</span><strong id="aiScore">0</strong></div>
+      <div class="message" id="message">光っている穴をタップ</div>
+      <div class="score-mini player"><span>あなた</span><strong id="playerScore">0</strong></div>
+    </section>
+
+    <section class="board-wrap">
+      <div class="store store-ai" aria-label="相手のGET">
+        <span>相手</span><em>GET</em><strong id="aiStore">0</strong>
+      </div>
+
+      <div class="board" id="board">
+        <div class="row-label top">相手の列 ← ← ← ← ←</div>
+        <div class="pit-row ai-row" id="aiRow"></div>
+        <div class="pit-row player-row" id="playerRow"></div>
+        <div class="row-label bottom">あなたの列 → → → → →</div>
+      </div>
+
+      <div class="store store-player" aria-label="あなたのGET">
+        <span>あなた</span><em>GET</em><strong id="playerStore">0</strong>
       </div>
     </section>
 
-    <section class="board" id="board">
-      <div class="store store-op" aria-label="相手の得点エリア">
-        <div class="store-title">相手<br>GET</div>
-        <div class="store-score" id="opStore">0</div>
-      </div>
-
-      <div class="pit-area">
-        <div class="direction opponent-dir">相手の列　← ← ← ← ←</div>
-        <div class="row opponent-row" id="opponentRow"></div>
-        <div class="row my-row" id="myRow"></div>
-        <div class="direction my-dir">あなたの列　→ → → → →</div>
-      </div>
-
-      <div class="store store-me" aria-label="あなたの得点エリア">
-        <div class="store-title">あなた<br>GET</div>
-        <div class="store-score" id="myStore">0</div>
-      </div>
+    <section class="assist-card">
+      <div class="ai-chip" id="aiChip">AI自動対戦 ON</div>
+      <p id="detailText">相手の番になると、AIが自動で次の手を選びます。</p>
     </section>
 
-    <section class="message-card">
-      <div class="message-main" id="messageMain">光っている穴をタップ</div>
-      <div class="message-sub" id="messageSub">最後に置いた穴は白く光ります。横取りした時は表示します。</div>
-    </section>
-
-    <section class="controls" aria-label="操作ボタン">
+    <section class="controls">
       <button id="undoBtn" type="button">一手戻す</button>
-      <button id="switchBtn" type="button">手番切替</button>
-      <button id="resetBtn" type="button" class="danger">リセット</button>
+      <button id="toggleTurnBtn" type="button">手番切替</button>
+      <button id="resetBtn" type="button">リセット</button>
     </section>
   </main>
+
   <script src="script.js"></script>
 </body>
 </html>
