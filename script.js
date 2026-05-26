@@ -1,10 +1,12 @@
+
 'use strict';
-// mankara2_ai_auto_v3: 横取り判定を復旧。向かい側は画面上の同じ列で判定。横取り後は手番終了。
+// mankara2_ai_auto_v4: AIの動きを見える化。AI待機1.25秒、選択穴ハイライト、横取りログ表示。
 
 const PIT_COUNT = 6;
 const START_STONES = 4;
 const PLAYER = 'player';
 const AI = 'ai';
+const AI_DELAY_MS = 1250;
 
 let state;
 let history = [];
@@ -19,6 +21,7 @@ const els = {
   playerScore: document.getElementById('playerScore'),
   message: document.getElementById('message'),
   detailText: document.getElementById('detailText'),
+  logText: document.getElementById('logText'),
   turnBadge: document.getElementById('turnBadge'),
   undoBtn: document.getElementById('undoBtn'),
   toggleTurnBtn: document.getElementById('toggleTurnBtn'),
@@ -28,21 +31,24 @@ const els = {
 
 function newState() {
   return {
-    pits: {
-      ai: Array(PIT_COUNT).fill(START_STONES),
-      player: Array(PIT_COUNT).fill(START_STONES)
-    },
+    pits: { ai: Array(PIT_COUNT).fill(START_STONES), player: Array(PIT_COUNT).fill(START_STONES) },
     stores: { ai: 0, player: 0 },
     turn: PLAYER,
     last: null,
     captured: null,
     gameOver: false,
-    thinkingPit: null
+    thinkingPit: null,
+    selectedPit: null,
+    log: 'まだ動いていません。',
+    detail: '相手の番になると、AIが自動で次の手を選びます。'
   };
 }
 
 function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
 function opponent(side) { return side === PLAYER ? AI : PLAYER; }
+function label(side) { return side === PLAYER ? 'あなた' : 'AI'; }
+function rowLabel(side) { return side === PLAYER ? 'あなたの列' : '相手の列'; }
+function nth(index) { return `左から${index + 1}番目`; }
 function playablePits(side, s = state) { return s.pits[side].map((v, i) => v > 0 ? i : -1).filter(i => i >= 0); }
 function sideEmpty(side, s = state) { return s.pits[side].every(v => v === 0); }
 
@@ -75,10 +81,7 @@ function buildBoard() {
 }
 
 function stonePositions(n) {
-  const positions = [
-    [18,18],[42,15],[64,23],[24,42],[50,40],[72,48],[32,66],[58,66],
-    [12,60],[78,72],[42,82],[68,14],[18,76],[82,34],[36,30],[56,54]
-  ];
+  const positions = [[18,18],[42,15],[64,23],[24,42],[50,40],[72,48],[32,66],[58,66],[12,60],[78,72],[42,82],[68,14],[18,76],[82,34],[36,30],[56,54]];
   return positions.slice(0, Math.min(n, positions.length));
 }
 
@@ -112,6 +115,7 @@ function render() {
       pit.classList.toggle('last', !!state.last && state.last.side === side && state.last.index === i);
       pit.classList.toggle('capture', !!state.captured && state.captured.side === side && state.captured.index === i);
       pit.classList.toggle('ai-thinking', !!state.thinkingPit && state.thinkingPit.side === side && state.thinkingPit.index === i);
+      pit.classList.toggle('ai-selected', !!state.selectedPit && state.selectedPit.side === side && state.selectedPit.index === i);
     });
   }
   els.aiStore.textContent = state.stores.ai;
@@ -127,6 +131,7 @@ function render() {
 }
 
 function updateMessage() {
+  els.logText.textContent = state.log;
   if (state.gameOver) {
     if (state.stores.player > state.stores.ai) els.message.textContent = 'あなたの勝ち！';
     else if (state.stores.player < state.stores.ai) els.message.textContent = 'AIの勝ち';
@@ -135,17 +140,11 @@ function updateMessage() {
     return;
   }
   if (state.turn === AI) {
-    els.message.textContent = state.thinkingPit ? 'AIが選びました' : 'AIが考え中…';
-    els.detailText.textContent = '相手の番は自動で進みます。あなたは待つだけでOK。';
+    els.message.textContent = state.thinkingPit ? `AIが${nth(state.thinkingPit.index)}を選択` : 'AIが考え中…';
+    els.detailText.textContent = state.thinkingPit ? '光っている穴をAIが打ちます。少し待つと石が動きます。' : state.detail;
   } else {
     els.message.textContent = '光っている穴をタップ';
-    if (state.captured && state.captured.by === AI) {
-      els.detailText.textContent = 'AIの横取り後なので、あなたの番です。';
-    } else if (state.captured && state.captured.by === PLAYER) {
-      els.detailText.textContent = 'あなたの横取り後なので、AIの番に切り替わります。';
-    } else {
-      els.detailText.textContent = '相手の番になると、AIが自動で次の手を選びます。';
-    }
+    els.detailText.textContent = state.detail;
   }
 }
 
@@ -189,57 +188,59 @@ function finishIfNeeded(s) {
   return true;
 }
 
-function applyMove(s, side, index) {
+function applyMove(s, side, index, options = {}) {
+  const silent = !!options.silent;
   s.last = null;
   s.captured = null;
   s.thinkingPit = null;
+  s.selectedPit = { side, index };
+  const startStones = s.pits[side][index];
   const last = sow(s, side, index);
   s.last = last;
 
   let didCapture = false;
+  let log = `${label(side)}：${rowLabel(side)}の${nth(index)}から${startStones}個まきました。`;
+  let detail = side === PLAYER ? 'あなたの手が終わりました。' : 'AIの手が終わりました。';
+
   if (last && last.type === 'pit' && last.side === side && s.pits[side][last.index] === 1) {
     const opp = opponent(side);
-    // あそび大全系の見た目に合わせ、向かい側は画面上の同じ列。
-    // 以前の reverse 判定だと、見た目の正面ではない穴を見てしまい横取りが発生しない。
-    const oppIndex = last.index;
+    const oppIndex = last.index; // 画面上で正面の穴
     const captured = s.pits[opp][oppIndex];
     if (captured > 0) {
       s.pits[opp][oppIndex] = 0;
       s.pits[side][last.index] = 0;
       s.stores[side] += captured + 1;
-      s.captured = { side: opp, index: oppIndex, amount: captured + 1, by: side };
+      s.captured = { side: opp, index: oppIndex, amount: captured + 1, by: side, ownIndex: last.index, oppIndex };
       didCapture = true;
+      log = `${label(side)}が横取り：${rowLabel(side)}の${nth(last.index)}に最後の1個 → 正面の${rowLabel(opp)}${nth(oppIndex)}から${captured}個、合計${captured + 1}個GET。`;
+      detail = '横取り後はそこで手番終了。相手の番に切り替わります。';
     }
   }
 
   if (!finishIfNeeded(s)) {
-    // 重要：横取りが成立した手はそこで終了。再手番にはしない。
-    // 再手番になるのは「最後の石が自分のGET欄に入った時」だけ。
     const getsExtraTurn = !didCapture && last && last.type === 'store' && last.side === side;
     s.turn = getsExtraTurn ? side : opponent(side);
+    if (getsExtraTurn) detail = `${label(side)}のGET欄で終わったので、もう一度${label(side)}の番です。`;
     if (playablePits(s.turn, s).length === 0) s.turn = opponent(s.turn);
   }
+  if (!silent) { s.log = log; s.detail = detail; }
   return s;
 }
 
 function move(side, index, human) {
   if (state.gameOver || state.turn !== side || state.pits[side][index] <= 0) return;
-  if (human) saveHistory();
-  else saveHistory();
+  saveHistory();
   state = applyMove(state, side, index);
   render();
-  if (state.captured) {
-    const who = side === PLAYER ? 'あなた' : 'AI';
-    els.message.textContent = `${who}が${state.captured.amount}個ゲット！`;
-  }
+  if (state.captured) els.message.textContent = `${label(side)}が${state.captured.amount}個ゲット！`;
   scheduleAI();
 }
 
 function evaluateMove(side, index) {
-  const sim = applyMove(clone(state), side, index);
+  const sim = applyMove(clone(state), side, index, { silent:true });
   const scoreDiff = sim.stores[AI] - sim.stores[PLAYER];
   const extra = sim.turn === AI && !sim.gameOver ? 5 : 0;
-  const capture = sim.captured && sim.captured.side === PLAYER ? sim.captured.amount * 3 : 0;
+  const capture = sim.captured && sim.captured.by === AI ? sim.captured.amount * 3 : 0;
   const keepOptions = playablePits(AI, sim).length * 0.15;
   return scoreDiff * 2 + extra + capture + keepOptions;
 }
@@ -262,8 +263,11 @@ function scheduleAI() {
   const choice = chooseAiMove();
   if (choice == null) return;
   state.thinkingPit = { side:AI, index:choice };
+  state.selectedPit = { side:AI, index:choice };
+  state.log = `AIが選択予定：相手の列の${nth(choice)}。`;
+  state.detail = 'AIの選択穴を光らせています。石が動く前に確認できます。';
   render();
-  aiTimer = setTimeout(() => move(AI, choice, false), 720);
+  aiTimer = setTimeout(() => move(AI, choice, false), AI_DELAY_MS);
 }
 
 els.undoBtn.addEventListener('click', () => {
@@ -281,6 +285,9 @@ els.toggleTurnBtn.addEventListener('click', () => {
   saveHistory();
   state.turn = opponent(state.turn);
   state.thinkingPit = null;
+  state.selectedPit = null;
+  state.log = `手番を${state.turn === PLAYER ? 'あなた' : 'AI'}に切り替えました。`;
+  state.detail = state.turn === AI ? 'AIの番なので自動で進みます。' : '光っている穴をタップしてください。';
   render();
   scheduleAI();
 });
